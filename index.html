@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Home Network Dashboard</title>
+        <style>
+            :root {
+                /* Nord Color Palette */
+                --nord0: #2e3440;
+                --nord1: #3b4252;
+                --nord2: #434c5e;
+                --nord3: #4c566a;
+                --nord4: #d8dee9;
+                --nord5: #e5e9f0;
+                --nord6: #eceff4;
+                --nord7: #88c0d0;
+                --nord8: #81a1c1;
+                --nord9: #5e81ac;
+                --nord10: #bf616a;
+                --nord11: #d08770;
+                --nord12: #ebcb8b;
+                --nord13: #a3be8c;
+                --nord14: #88c0d0;
+                --nord15: #b48ead;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            }
+
+            body {
+                background: var(--nord0);
+                color: var(--nord4);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 40px 20px;
+                background-image:
+                    radial-gradient(
+                        circle at 10% 20%,
+                        rgba(136, 192, 208, 0.1) 0%,
+                        transparent 20%
+                    ),
+                    radial-gradient(
+                        circle at 90% 80%,
+                        rgba(179, 142, 173, 0.1) 0%,
+                        transparent 20%
+                    );
+            }
+
+            header {
+                text-align: center;
+                margin-bottom: 40px;
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2.8rem;
+                font-weight: 600;
+                color: var(--nord6);
+                margin-bottom: 10px;
+                letter-spacing: -0.5px;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+                color: var(--nord5);
+                opacity: 0.8;
+                font-weight: 300;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 24px;
+                width: 100%;
+                max-width: 1400px;
+            }
+
+            .card {
+                background: rgba(255, 255, 255, 0.08);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 16px;
+                padding: 24px;
+                text-align: center;
+                transition: all 0.3s ease;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(
+                    90deg,
+                    var(--nord7),
+                    var(--nord8),
+                    var(--nord9)
+                );
+                transform: scaleX(0);
+                transform-origin: left;
+                transition: transform 0.4s ease;
+            }
+
+            .card:hover::before {
+                transform: scaleX(1);
+            }
+
+            .card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+            }
+
+            .card a {
+                text-decoration: none;
+                color: inherit;
+                display: block;
+                width: 100%;
+                height: 100%;
+                position: relative;
+                z-index: 2;
+            }
+
+            .card-icon {
+                font-size: 2.5rem;
+                margin-bottom: 12px;
+                color: var(--nord7);
+            }
+
+            .card-title {
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: var(--nord6);
+                letter-spacing: -0.3px;
+            }
+
+            .card-url {
+                font-size: 0.8rem;
+                color: var(--nord5);
+                margin-top: 6px;
+                font-family: "Courier New", monospace;
+                opacity: 0.7;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .add-card {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px dashed var(--nord5);
+                border-radius: 16px;
+                padding: 24px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                color: var(--nord5);
+                font-weight: 500;
+            }
+
+            .add-card:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: var(--nord7);
+                transform: translateY(-4px);
+            }
+
+            .add-card-icon {
+                font-size: 2rem;
+                margin-bottom: 10px;
+                color: var(--nord7);
+            }
+
+            footer {
+                margin-top: 60px;
+                text-align: center;
+                color: var(--nord5);
+                font-size: 0.9rem;
+                opacity: 0.6;
+                padding: 20px;
+                width: 100%;
+            }
+
+            @media (max-width: 768px) {
+                .grid {
+                    grid-template-columns: repeat(
+                        auto-fill,
+                        minmax(180px, 1fr)
+                    );
+                    gap: 16px;
+                }
+
+                h1 {
+                    font-size: 2.2rem;
+                }
+
+                .card {
+                    height: 140px;
+                    padding: 18px;
+                }
+
+                .card-title {
+                    font-size: 1.1rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>🏠 Home Network</h1>
+            <p class="subtitle">The self-hosted ecosystem</p>
+        </header>
+
+        <div class="grid">
+            <!-- Grafana -->
+            <div class="card">
+                <a href="http://192.168.1.222:3000" target="_blank">
+                    <div class="card-icon">📊</div>
+                    <div class="card-title">Grafana</div>
+                    <div class="card-url">192.168.1.222:3000</div>
+                </a>
+            </div>
+
+            <!-- Deluge -->
+            <div class="card">
+                <a href="http://192.168.1.222:8090" target="_blank">
+                    <div class="card-icon">🧲</div>
+                    <div class="card-title">Deluge</div>
+                    <div class="card-url">192.168.1.222:8090</div>
+                </a>
+            </div>
+
+            <!-- Add more services here -->
+            <!-- Example template for additional services -->
+            <!--
+            <div class="card">
+            <a href="http://192.168.1.222:PORT" target="_blank">
+                <div class="card-icon">🚀</div>
+                <div class="card-title">Service Name</div>
+                <div class="card-url">192.168.1.222:PORT</div>
+            </a>
+            </div>
+            -->
+        </div>
+
+        <footer>
+            &copy; 2025 Home Network Dashboard | <span id="time"></span>
+        </footer>
+
+        <script>
+            // Update time in footer
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+                document.getElementById("time").textContent = timeString;
+            }
+
+            // Update time every second
+            setInterval(updateTime, 1000);
+            updateTime();
+        </script>
+    </body>
+</html>
