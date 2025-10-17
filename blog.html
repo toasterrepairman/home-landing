@@ -192,6 +192,19 @@
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
+                opacity: 0;
+                animation: fadeInUp 0.6s ease forwards;
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .post:hover {
@@ -226,6 +239,14 @@
                 font-family: "Courier New", monospace;
                 color: var(--nord12);
                 font-size: 0.9em;
+            }
+
+            .post-timestamp {
+                font-size: 0.8rem;
+                color: var(--nord8);
+                opacity: 0.7;
+                margin-bottom: 8px;
+                font-style: italic;
             }
 
             .post-footer {
@@ -309,6 +330,29 @@
                 text-overflow: ellipsis;
             }
 
+            /* Loading State */
+            .loading {
+                text-align: center;
+                padding: 60px 20px;
+                color: var(--nord5);
+            }
+
+            .loading-spinner {
+                display: inline-block;
+                width: 50px;
+                height: 50px;
+                border: 3px solid rgba(136, 192, 208, 0.2);
+                border-top-color: var(--nord7);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
             /* Empty State */
             .empty-state {
                 text-align: center;
@@ -321,6 +365,40 @@
                 font-size: 4rem;
                 margin-bottom: 16px;
                 opacity: 0.5;
+            }
+
+            /* Error State */
+            .error-state {
+                background: rgba(191, 97, 106, 0.1);
+                border: 1px solid var(--nord10);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 20px 0;
+                color: var(--nord6);
+                text-align: center;
+            }
+
+            .error-icon {
+                font-size: 2rem;
+                margin-bottom: 10px;
+                color: var(--nord10);
+            }
+
+            .retry-button {
+                margin-top: 15px;
+                padding: 10px 20px;
+                background: var(--nord10);
+                color: var(--nord6);
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+
+            .retry-button:hover {
+                background: var(--nord11);
+                transform: translateY(-1px);
             }
 
             /* Responsive */
@@ -346,12 +424,16 @@
                     padding: 12px;
                 }
 
-                .post {
+                .post-content {
                     padding: 16px;
                 }
 
                 .profile-card {
                     padding: 16px;
+                }
+
+                .status-image {
+                    width: 100px;
                 }
             }
         </style>
@@ -371,55 +453,32 @@
         <!-- Main Content -->
         <div class="container">
             <!-- Blog Content (Main Column) -->
-            <div class="blog-content">
-                <!-- Sample Post -->
-                <article class="post">
-                    <div class="post-content">
-                        <h3>Here's what I'm passionate about:</h3>
-                        <p>
-                            Exploring new technologies: I'm constantly learning
-                            and experimenting with new gadgets, apps, and
-                            platforms. I'm constantly trying to understand how
-                            these innovations are shaping the future and how
-                            they can be used to improve lives.Learning new
-                            things: I'm always eager to learn and expand my
-                            knowledge base. I'm passionate about staying
-                            up-to-date with the latest trends, developments, and
-                            exciting innovations.Understanding the world: I'm
-                            fascinated by the interconnectedness of the world
-                            and the ways technology can influence our daily
-                            lives. I'm constantly looking for ways to make a
-                            positive impact and contribute to a more sustainable
-                            and equitable future.Building relationships: I'm a
-                            good listener and always willing to help others. I
-                            enjoy collaborating with people from different
-                            backgrounds and cultures.
-                        </p>
-                    </div>
+            <div class="blog-content" id="blogContent">
+                <!-- Loading state -->
+                <div class="loading" id="loadingState">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 20px">Loading blog posts...</p>
+                </div>
 
-                    <div class="post-footer">
-                        <div class="post-user">
-                            <div class="post-avatar">💡</div>
-                            <div class="post-handle">@egghead</div>
-                        </div>
+                <!-- Posts will be dynamically inserted here -->
+                <div id="postsContainer"></div>
 
-                        <div class="post-status">
-                            <div class="status-text">
-                                <div class="status-location">
-                                    Sydney, Australia
-                                </div>
-                                <div class="status-quip">Enjoying the sun!</div>
-                            </div>
-                            <img
-                                src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&dl=dan-freeman-7Zb7kUyQg1E-unsplash.jpg"
-                                alt="Sydney, Australia"
-                                class="status-image"
-                            />
-                        </div>
-                    </div>
-                </article>
+                <!-- Empty state (hidden by default) -->
+                <div class="empty-state" id="emptyState" style="display: none">
+                    <div class="empty-state-icon">📝</div>
+                    <h3>No posts yet</h3>
+                    <p>Check back soon for new content!</p>
+                </div>
 
-                <!-- More posts will be dynamically added here -->
+                <!-- Error state (hidden by default) -->
+                <div class="error-state" id="errorState" style="display: none">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Oops! Something went wrong</h3>
+                    <p id="errorMessage">Unable to load blog posts</p>
+                    <button class="retry-button" onclick="fetchBlogPosts()">
+                        Try Again
+                    </button>
+                </div>
             </div>
 
             <!-- Profile Sidebar (Floating) -->
@@ -446,7 +505,187 @@
         </div>
 
         <script>
-            // Add any dynamic functionality here when connecting to the database
+            // Configuration
+            const API_BASE_URL = "http://localhost:8080/api"; // Update this with your actual API endpoint
+            const POSTS_LIMIT = 10;
+
+            // Format timestamp for display
+            function formatTimestamp(timestamp) {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffSecs = Math.floor(diffMs / 1000);
+                const diffMins = Math.floor(diffSecs / 60);
+                const diffHours = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHours / 24);
+
+                if (diffDays > 7) {
+                    return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                    });
+                } else if (diffDays > 0) {
+                    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+                } else if (diffHours > 0) {
+                    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+                } else if (diffMins > 0) {
+                    return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+                } else {
+                    return "Just now";
+                }
+            }
+
+            // Create a blog post HTML element
+            function createPostElement(post, index) {
+                const postDiv = document.createElement("article");
+                postDiv.className = "post";
+                postDiv.style.animationDelay = `${index * 0.1}s`;
+
+                postDiv.innerHTML = `
+                    <div class="post-content">
+                        <div class="post-timestamp">${formatTimestamp(post.timestamp)}</div>
+                        <h3>Here's what I'm passionate about:</h3>
+                        <p>${post.passion}</p>
+                    </div>
+                    <div class="post-footer">
+                        <div class="post-user">
+                            <div class="post-avatar">💡</div>
+                            <div class="post-handle">@egghead</div>
+                        </div>
+                        <div class="post-status">
+                            <div class="status-text">
+                                <div class="status-location">${post.location}</div>
+                                <div class="status-quip">${post.activity}</div>
+                            </div>
+                            <img
+                                src="${post.image_url}"
+                                alt="${post.location}"
+                                class="status-image"
+                                onerror="this.src='https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400'"
+                            />
+                        </div>
+                    </div>
+                `;
+
+                return postDiv;
+            }
+
+            // Fetch blog posts from the API
+            async function fetchBlogPosts() {
+                const loadingState = document.getElementById("loadingState");
+                const errorState = document.getElementById("errorState");
+                const emptyState = document.getElementById("emptyState");
+                const postsContainer =
+                    document.getElementById("postsContainer");
+
+                // Show loading state
+                loadingState.style.display = "block";
+                errorState.style.display = "none";
+                emptyState.style.display = "none";
+                postsContainer.innerHTML = "";
+
+                try {
+                    // Make API call to fetch posts
+                    const response = await fetch(
+                        `${API_BASE_URL}/posts?limit=${POSTS_LIMIT}`,
+                        {
+                            method: "GET",
+                            headers: {
+                                Accept: "application/json",
+                            },
+                        },
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`,
+                        );
+                    }
+
+                    const posts = await response.json();
+
+                    // Hide loading state
+                    loadingState.style.display = "none";
+
+                    if (posts && posts.length > 0) {
+                        // Render posts
+                        posts.forEach((post, index) => {
+                            const postElement = createPostElement(post, index);
+                            postsContainer.appendChild(postElement);
+                        });
+                    } else {
+                        // Show empty state
+                        emptyState.style.display = "block";
+                    }
+                } catch (error) {
+                    console.error("Error fetching blog posts:", error);
+
+                    // Hide loading state and show error state
+                    loadingState.style.display = "none";
+                    errorState.style.display = "block";
+
+                    const errorMessage =
+                        document.getElementById("errorMessage");
+                    if (error.message.includes("fetch")) {
+                        errorMessage.textContent =
+                            "Unable to connect to the server. Please check if the API is running.";
+                    } else {
+                        errorMessage.textContent = `Error: ${error.message}`;
+                    }
+                }
+            }
+
+            // Fallback data for demonstration (remove this when API is connected)
+            function loadDemoData() {
+                const demoPost = {
+                    id: 1,
+                    timestamp: new Date().toISOString(),
+                    passion:
+                        "Exploring new technologies: I'm constantly learning and experimenting with new gadgets, apps, and platforms. I'm constantly trying to understand how these innovations are shaping the future and how they can be used to improve lives. Learning new things: I'm always eager to learn and expand my knowledge base. I'm passionate about staying up-to-date with the latest trends, developments, and exciting innovations. Understanding the world: I'm fascinated by the interconnectedness of the world and the ways technology can influence our daily lives. I'm constantly looking for ways to make a positive impact and contribute to a more sustainable and equitable future. Building relationships: I'm a good listener and always willing to help others. I enjoy collaborating with people from different backgrounds and cultures.",
+                    location: "Sydney, Australia",
+                    activity: "Enjoying the sun!",
+                    image_url:
+                        "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400",
+                };
+
+                const loadingState = document.getElementById("loadingState");
+                const postsContainer =
+                    document.getElementById("postsContainer");
+
+                loadingState.style.display = "none";
+
+                // Generate multiple demo posts with different timestamps
+                for (let i = 0; i < 3; i++) {
+                    const post = {
+                        ...demoPost,
+                        id: i + 1,
+                        timestamp: new Date(
+                            Date.now() - i * 86400000,
+                        ).toISOString(), // Each post 1 day apart
+                    };
+                    const postElement = createPostElement(post, i);
+                    postsContainer.appendChild(postElement);
+                }
+            }
+
+            // Initialize when page loads
+            document.addEventListener("DOMContentLoaded", function () {
+                // Try to fetch from API first
+                fetchBlogPosts().catch(() => {
+                    // If API fails, load demo data (remove this in production)
+                    console.log("API not available, loading demo data...");
+                    loadDemoData();
+                });
+            });
+
+            // Optional: Auto-refresh posts every 5 minutes
+            setInterval(
+                () => {
+                    fetchBlogPosts();
+                },
+                5 * 60 * 1000,
+            );
         </script>
     </body>
 </html>
